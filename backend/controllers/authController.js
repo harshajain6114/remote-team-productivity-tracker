@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// Token generator
+// 🔐 Token generator
 const generateTokens = (user) => {
   const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_SECRET, { expiresIn: '15m' });
   const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_SECRET, { expiresIn: '7d' });
@@ -30,8 +30,8 @@ exports.register = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        accessToken: tokens.accessToken, // ✅ important
       },
-      accessToken: tokens.accessToken,
     });
   } catch (err) {
     console.error('Register Error:', err.message);
@@ -43,8 +43,8 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const user = await User.findOne({ email });
+
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -53,14 +53,13 @@ exports.login = async (req, res) => {
     res.cookie('refreshToken', tokens.refreshToken, { httpOnly: true });
 
     res.json({
-      message: 'Login successful',
       user: {
         _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
+        accessToken: tokens.accessToken, // ✅ important
       },
-      accessToken: tokens.accessToken,
     });
   } catch (err) {
     console.error('Login Error:', err.message);
